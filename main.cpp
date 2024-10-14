@@ -1,11 +1,69 @@
 #include <iostream>
-
+#include <vector>
 #include "src/NonManifoldMesh.h"
 #include "src/SlabMesh.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
 
 namespace ps = polyscope;
+
+void ComputeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
+{
+
+	//ma_qem_mesh.maxhausdorff_distance = 0.;
+	slab_mesh.maxhausdorff_distance = 0;
+	double sumhausdorff_distance = 0;
+	for (unsigned i = 0; i < input.pVertexList.size(); i++)
+	{
+		double min_dis = DBL_MAX;
+		unsigned min_index = -1;
+		Vector3d bou_ver(input.pVertexList[i]->point()[0], input.pVertexList[i]->point()[1], input.pVertexList[i]->point()[2]);
+		bou_ver /=  input.bb_diagonal_length; 
+
+		for (unsigned j = 0; j < slab_mesh.numVertices; j++)
+		{
+			Sphere ma_ver = slab_mesh.vertices[j].second->sphere;
+			double temp_length = abs((bou_ver - ma_ver.center).Length() - ma_ver.radius);
+			//if (temp_length >= 0 && temp_length < min_dis)
+			if (temp_length < min_dis)
+			{
+				min_dis = temp_length;
+				min_index = j;
+			}
+
+
+		}
+
+
+
+		if (min_index != -1)
+		{	
+			double temp_near_dis = slab_mesh.NearestPoint(bou_ver, min_index);
+			min_dis = min(temp_near_dis, min_dis);
+
+			sumhausdorff_distance += min_dis;
+
+			//ma_qem_mesh.vertices[min_index].second->bplist.push_back(i);
+			//ma_qem_mesh.maxhausdorff_distance = max(ma_qem_mesh.maxhausdorff_distance, min_dis);
+
+			slab_mesh.vertices[min_index].second->bplist.insert(i);
+			slab_mesh.maxhausdorff_distance = max(slab_mesh.maxhausdorff_distance, min_dis);
+
+			//input.pVertexList[i]->vqem_hausdorff_dist = min_dis / input.bb_diagonal_length;
+			input.pVertexList[i]->vqem_hausdorff_dist = min_dis;
+			input.pVertexList[i]->vqem_hansdorff_index = min_index;
+
+			//input.pVertexList[i]->slab_hausdorff_dist = min_dis / input.bb_diagonal_length;
+			input.pVertexList[i]->slab_hausdorff_dist = min_dis;
+			input.pVertexList[i]->slab_hansdorff_index = min_index;
+		}
+	}
+	
+	//ma_qem_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
+	slab_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
+}
+
+
 void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname) {
   std::ifstream mastream(maname.c_str());
   NonManifoldMesh newinputnmm;
@@ -268,6 +326,7 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       // ui.actionReverse_Orientation->setChecked(true);
 
       // importVP(prefix);
+      slabMesh -> pmesh = input;
       bool re = importMA(input, slabMesh, maname);
       if (re == false) return;
 
@@ -276,12 +335,11 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       // initialize();
       slabMesh->preserve_boundary_method = 0;
       slabMesh->hyperbolic_weight_type = 3;
-      slabMesh->compute_hausdorff = false;
+      slabMesh->compute_hausdorff = true;
       slabMesh->boundary_compute_scale = 0;
       slabMesh->prevent_inversion = false;
 
       LoadSlabMesh(slabMesh);
-      slabMesh -> pmesh = input;
       // long ti = m_pThreeDimensionalShape->LoadSlabMesh();
       // slab_initial = true;
 
@@ -365,9 +423,12 @@ int main(int argc, char** argv) {
   int nf = pinput -> pFaceList.size();
   Eigen::MatrixXd V(nv, 3);
   Eigen::MatrixXi F(nf, 3); 
+  std::vector<double> hausdoff(nv);
+  ComputeHausdorffDistance(slabMesh, input);
   for (int i = 0; i < nv; i++) {
     auto it = input.pVertexList[i];
     V.row(i) = Eigen::Vector3d(it->point()[0], it->point()[1], it->point()[2]);
+    hausdoff[i] = it-> slab_hausdorff_dist;
   }
   for (int i = 0; i < nf; i++) {
     auto it = input.pFaceList[i] -> facet_begin();
@@ -377,10 +438,8 @@ int main(int argc, char** argv) {
     F.row(i) = Eigen::Vector3i(i0, i1, i2);
   }
 
-  // cout << "nv: " << nv << " nf: " << nf << endl;
-  // cout << V << endl;
-  // cout << F << endl;
-  ps::registerSurfaceMesh("input mesh", V, F);
+  auto input_mesh = ps::registerSurfaceMesh("input mesh", V, F);
+  input_mesh -> addVertexScalarQuantity("hausdorff", hausdoff);
   ps::show();
   return 0;
 }
