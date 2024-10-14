@@ -33,8 +33,10 @@ endif()
 include_directories(include)
 include_directories(${CMAKE_SOURCE_DIR}/extern/HouGeoIO/src)
 include_directories(${CMAKE_SOURCE_DIR}/extern/HouGeoIO/extern)
+include_directories(${CMAKE_SOURCE_DIR}/extern/polyscope/include)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/HouGeoIO)
+add_subdirectory(${CMAKE_SOURCE_DIR}/extern/polyscope)
 add_executable(QMAT main.cpp
         src/SlabMesh.h
         src/SlabMesh.cpp
@@ -53,4 +55,4 @@ add_executable(QMAT main.cpp
         src/NonManifoldMesh.cpp
         src/NonManifoldMesh.h
 )
-target_link_libraries(QMAT HouGeoIO)
+target_link_libraries(QMAT HouGeoIO polyscope)

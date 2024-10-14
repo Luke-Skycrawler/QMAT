@@ -2,7 +2,10 @@
 
 #include "src/NonManifoldMesh.h"
 #include "src/SlabMesh.h"
+#include "polyscope/polyscope.h"
+#include "polyscope/surface_mesh.h"
 
+namespace ps = polyscope;
 void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname) {
   std::ifstream mastream(maname.c_str());
   NonManifoldMesh newinputnmm;
@@ -247,7 +250,7 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       input->GenerateRandomColor();  // color of vertex and triangle
       input->compute_normals();      // normal of vertex and triangle
       // pThreeDimensionalShape->input_nmm.meshname = filename.;
-
+      cout << input->pVertexList.size() << " " << input->pFaceList.size()<< endl;
       std::ifstream streampol(filename);
       Polyhedron pol;
       streampol >> pol;
@@ -278,6 +281,7 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       slabMesh->prevent_inversion = false;
 
       LoadSlabMesh(slabMesh);
+      slabMesh -> pmesh = input;
       // long ti = m_pThreeDimensionalShape->LoadSlabMesh();
       // slab_initial = true;
 
@@ -316,6 +320,7 @@ void simplifySlab(SlabMesh* slabMesh, Mesh* mesh, unsigned num_spheres) {
   // long start_time = clock();
   // slabMesh->initCollapseQueue();
   // slabMesh->initBoundaryCollapseQueue();
+  slabMesh-> compute_hausdorff = true;
   slabMesh->Simplify(slabMesh->numVertices - threhold);
   // long end_time = clock();
   //
@@ -355,5 +360,27 @@ int main(int argc, char** argv) {
   pslabMesh->ExportPly("export_half", pinput);
   printf("done export\n");
 
+  ps::init();
+  int nv = pinput ->pVertexList.size();
+  int nf = pinput -> pFaceList.size();
+  Eigen::MatrixXd V(nv, 3);
+  Eigen::MatrixXi F(nf, 3); 
+  for (int i = 0; i < nv; i++) {
+    auto it = input.pVertexList[i];
+    V.row(i) = Eigen::Vector3d(it->point()[0], it->point()[1], it->point()[2]);
+  }
+  for (int i = 0; i < nf; i++) {
+    auto it = input.pFaceList[i] -> facet_begin();
+    int i0 = it -> vertex() -> id;
+    int i1 = it -> next() -> vertex() -> id;
+    int i2 = it -> next() -> next() -> vertex() -> id;
+    F.row(i) = Eigen::Vector3i(i0, i1, i2);
+  }
+
+  // cout << "nv: " << nv << " nf: " << nf << endl;
+  // cout << V << endl;
+  // cout << F << endl;
+  ps::registerSurfaceMesh("input mesh", V, F);
+  ps::show();
   return 0;
 }
