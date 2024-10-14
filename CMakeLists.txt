@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(QMAT)
 
 set(CMAKE_CXX_STANDARD 14)
-
+find_package (Eigen3 CONFIG REQUIRED)
 if(APPLE)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
@@ -31,7 +31,10 @@ elseif(WIN32)
 endif()
 
 include_directories(include)
+include_directories(${CMAKE_SOURCE_DIR}/extern/HouGeoIO/src)
+include_directories(${CMAKE_SOURCE_DIR}/extern/HouGeoIO/extern)
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/extern/HouGeoIO)
 add_executable(QMAT main.cpp
         src/SlabMesh.h
         src/SlabMesh.cpp
@@ -50,3 +53,4 @@ add_executable(QMAT main.cpp
         src/NonManifoldMesh.cpp
         src/NonManifoldMesh.h
 )
+target_link_libraries(QMAT HouGeoIO)

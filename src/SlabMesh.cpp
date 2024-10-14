@@ -2910,6 +2910,54 @@ void SlabMesh::ExportSimplifyResult()
     //f_result_out << simplified_boundary_edges << "\t" << simplified_inside_edges << "\t" << maxhausdorff_distance << endl;
 }
 
+void SlabMesh::ExportPly(std::string fname, Mesh* mesh) {
+    fname += "___v_";
+    fname += std::to_string(static_cast<long long>(numVertices));
+    fname += "___e_";
+    fname += std::to_string(static_cast<long long>(numEdges));
+    fname += "___f_";
+    fname += std::to_string(static_cast<long long>(numFaces));
+
+    AdjustStorage();
+
+    std::string plyname = fname;
+    plyname += ".ply";
+
+    std::ofstream fout(plyname);
+
+    //	GraphVertexIterator gvi,gvi_end;
+    fout << "ply" << std::endl;
+    fout << "format ascii 1.0" << std::endl;
+    fout << "element vertex " << numVertices << std::endl;
+    fout << "property float x" << endl;
+    fout << "property float y" << endl;
+    fout << "property float z" << endl;
+    fout << "property float r" << endl;
+    fout << "element face " << numEdges + numFaces << endl;
+    fout << "property list uchar uint vertex_indices" << endl;
+    fout << "end_header" << endl;
+    
+    // fout << numVertices << " " << numEdges << " " << numFaces << std::endl;
+
+    //fout << num_vertices(*g) << " " << num_edges(*g) << " " << g->tris.size() << std::endl;
+
+    for(unsigned i = 0; i < vertices.size(); i ++)
+        //fout << "v " << vertices[i].second->sphere.center << " " << vertices[i].second->sphere.radius << std::endl;
+        fout << setiosflags(ios::fixed) << setprecision(15) << (vertices[i].second->sphere.center * mesh->bb_diagonal_length) << " " << (vertices[i].second->sphere.radius * mesh->bb_diagonal_length) << std::endl;
+
+    for(unsigned i = 0; i < edges.size(); i ++)
+        fout << "2 " << edges[i].second->vertices_.first << " " << edges[i].second->vertices_.second << std::endl;
+    for(unsigned i = 0; i < faces.size(); i ++)
+    {
+        fout << "3 ";
+        for(std::set<unsigned>::iterator si = faces[i].second->vertices_.begin();
+            si != faces[i].second->vertices_.end(); si ++)
+            fout << " " << *si;
+        fout << std::endl;
+    }
+    fout.close();
+
+}
 void SlabMesh::Export(std::string fname, Mesh* mesh){
     fname += "___v_";
     fname += std::to_string(static_cast<long long>(numVertices));

@@ -161,6 +161,7 @@ public:
 
     void ExportSimplifyResult();
     void Export(string fname, Mesh* mesh);
+    void ExportPly(string fname, Mesh* mesh);
 
 public:
     void clear();

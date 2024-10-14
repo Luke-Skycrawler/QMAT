@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
   printf("done openmeshfile\n");
   simplifySlab(pslabMesh, pinput, num_spheres);
   printf("done simplifyslab\n");
-  pslabMesh->Export("export_half", pinput);
+  pslabMesh->ExportPly("export_half", pinput);
   printf("done export\n");
 
   return 0;
