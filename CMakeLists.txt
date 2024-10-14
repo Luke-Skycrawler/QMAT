@@ -3,6 +3,9 @@ project(QMAT)
 
 set(CMAKE_CXX_STANDARD 14)
 find_package (Eigen3 CONFIG REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp)
 if(APPLE)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
@@ -37,8 +40,8 @@ include_directories(${CMAKE_SOURCE_DIR}/extern/polyscope/include)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/HouGeoIO)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/polyscope)
-add_executable(QMAT main.cpp
-        src/SlabMesh.h
+
+set(SOURCES src/SlabMesh.h
         src/SlabMesh.cpp
         src/Wm4Math.cpp
         src/Wm4Math.h
@@ -55,4 +58,17 @@ add_executable(QMAT main.cpp
         src/NonManifoldMesh.cpp
         src/NonManifoldMesh.h
 )
+add_executable(QMAT main.cpp ${SOURCES})
 target_link_libraries(QMAT HouGeoIO polyscope)
+pybind11_add_module(pyqmat ${SOURCES} 
+python/bindings.cpp 
+python/pyqmat.h 
+python/pyqmat.cpp
+)
+target_include_directories(pyqmat PRIVATE ${CMAKE_SOURCE_DIR}/python
+    include
+    ${CMAKE_SOURCE_DIR}
+)
+target_link_libraries(pyqmat PRIVATE PkgConfig::gmp)
+
+

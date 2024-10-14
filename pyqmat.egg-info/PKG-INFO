@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: pyqmat
+Version: 0.0.1
+Summary: QMAT python binding
+Author: Haoyang Shi
+Author-email: haoyang.shi@utah.edu
+Requires-Python: >=3.7
+License-File: LICENSE

@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+pyqmat.egg-info/PKG-INFO
+pyqmat.egg-info/SOURCES.txt
+pyqmat.egg-info/dependency_links.txt
+pyqmat.egg-info/not-zip-safe
+pyqmat.egg-info/top_level.txt
