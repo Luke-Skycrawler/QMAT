@@ -3,10 +3,16 @@
 #include "pyqmat.h"
 using namespace std;
 
-void QMAT::ComputeHausdorffDistance() {
+void QMATinh::QMATinh(const std::string &file, const std::string &maname)
+{
+  openmeshfile(&input, this, file, maname);
+}
 
-	//ma_qem_mesh.maxhausdorff_distance = 0.;
-	slab_mesh.maxhausdorff_distance = 0;
+void computeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
+{
+
+  // ma_qem_mesh.maxhausdorff_distance = 0.;
+  slab_mesh.maxhausdorff_distance = 0;
 	double sumhausdorff_distance = 0;
 	for (unsigned i = 0; i < input.pVertexList.size(); i++)
 	{
@@ -56,6 +62,10 @@ void QMAT::ComputeHausdorffDistance() {
 	
 	//ma_qem_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
 	slab_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
+}
+void QMAT::ComputeHausdorffDistance()
+{
+  computeHausdorffDistance(slab_mesh, input);
 }
 
 void QMAT::ExportMA(const std::string & fname) {
@@ -375,9 +385,8 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
 QMAT::QMAT(const std::string &filename, const std::string &maname) {
   openmeshfile(&input, &slab_mesh, filename, maname);
 }
-void QMAT::simplifySlab(unsigned num_spheres) {
-  SlabMesh *slabMesh = &slab_mesh;
-  Mesh *mesh = &input;
+void SimplifySlab(SlabMesh *slabMesh, Mesh *mesh, unsigned num_spheres)
+{
   slabMesh->CleanIsolatedVertices();
   // int threhold = min(10000, (int)(slabMesh->numVertices / 2));
   int threhold = num_spheres;
@@ -395,7 +404,7 @@ void QMAT::simplifySlab(unsigned num_spheres) {
   // long start_time = clock();
   // slabMesh->initCollapseQueue();
   // slabMesh->initBoundaryCollapseQueue();
-  slabMesh-> compute_hausdorff = true;
+  slabMesh->compute_hausdorff = true;
   slabMesh->Simplify(slabMesh->numVertices - threhold);
   // long end_time = clock();
   //
@@ -410,4 +419,38 @@ void QMAT::simplifySlab(unsigned num_spheres) {
   slabMesh->ComputeFacesSimpleTriangles();
 
   std::cout << "Simplify done." << std::endl;
+}
+
+void QMAT::simplifySlab(unsigned num_spheres)
+{
+  SlabMesh *slabMesh = &slab_mesh;
+  Mesh *mesh = &input;
+  SimplifySlab(slabMesh, &input, num_spheres);
+}
+
+void QMATinh::simplify(int n)
+{
+  SimplifySlab(this, &input, n);
+}
+void QMATinh::export_ply(const std::string &fname)
+{
+  ExportPly(fname, &input);
+}
+
+void QMATinh::export_ma(const std::string &fname)
+{
+  Export(fname, &input);
+}
+
+std::vector<double> QMATinh::hausdorff()
+{
+  int nv = input.pVertexList.size();
+  std::vector<double> hausdoff(nv);
+  computeHausdorffDistance(*this, input);
+  for (int i = 0; i < nv; i++)
+  {
+    auto it = input.pVertexList[i];
+    hausdoff[i] = it->slab_hausdorff_dist;
+  }
+  return hausdoff;
 }

@@ -14,3 +14,13 @@ struct QMAT{
     void ExportMA(const std::string & fname);
     std::vector<double> export_hausdorff_distance();
 };
+
+struct QMATinh : public SlabMesh
+{
+    QMATinh(const std::string &file, const std::string &maname);
+    void simplify(int n);
+    Mesh input;
+    std::vector<double> hausdorff();
+    void export_ply(const std::string &fname);
+    void export_ma(const std::string &fname);
+};
