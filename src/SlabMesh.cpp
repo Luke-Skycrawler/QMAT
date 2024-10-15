@@ -2996,7 +2996,32 @@ void SlabMesh::Export(std::string fname, Mesh* mesh){
     fout.close();
 }
 
+void SlabMesh::displace_vertices(const Eigen::MatrixXd &V) {
+    double scale = 1.0 / pmesh->bb_diagonal_length;
+    for (int i = 0; i < vertices.size(); i ++) {
+        vertices[i].second->sphere.center = Vector3d{ V(i, 0), V(i, 1), V(i, 2) } * scale;
+    }
+}
 
+Eigen::MatrixXd SlabMesh::V() const {
+    Eigen::MatrixXd V(numVertices, 3);
+    double scale = pmesh -> bb_diagonal_length;
+    
+    for (int i = 0; i < numVertices; i ++) {
+        V(i, 0) = vertices[i].second->sphere.center[0] * scale;
+        V(i, 1) = vertices[i].second->sphere.center[1] * scale;
+        V(i, 2) = vertices[i].second->sphere.center[2] * scale;
+    }
+    return V;
+}
+
+Eigen::VectorXd SlabMesh::R() const {
+    return Eigen::VectorXd(1);
+}
+
+void SlabMesh::set_R(const Eigen::VectorXd &R) {
+
+}
 void SlabMesh::InitialTopologyProperty(unsigned vid) {
     if (numVertices > 100)
         return;

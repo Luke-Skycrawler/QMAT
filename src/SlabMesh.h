@@ -2,7 +2,7 @@
 #define _SLABMESH_H
 
 #include "PrimMesh.h"
-
+#include <Eigen/Dense>
 class SlabPrim
 {
 public:
@@ -171,6 +171,14 @@ public:
     void CleanIsolatedVertices();
     void InitialTopologyProperty(unsigned vid);
     void InitialTopologyProperty();
+
+
+    void displace_vertices(const Eigen::MatrixXd &V);
+    Eigen::MatrixXd V() const;
+
+
+    void set_R(const Eigen::VectorXd & R);
+    Eigen::VectorXd R() const;
 };
 
 #endif

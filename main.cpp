@@ -441,6 +441,12 @@ int main(int argc, char** argv) {
 
   auto input_mesh = ps::registerSurfaceMesh("input mesh", V, F);
   input_mesh -> addVertexScalarQuantity("hausdorff", hausdoff);
+
+  // V = slabMesh.V();
+  // V *= 2.0;
+  // slabMesh.displace_vertices(V);
+  // slabMesh.Export("2x", pinput);
   ps::show();
+
   return 0;
 }
