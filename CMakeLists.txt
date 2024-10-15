@@ -71,4 +71,15 @@ target_include_directories(pyqmat PRIVATE ${CMAKE_SOURCE_DIR}/python
 )
 target_link_libraries(pyqmat PRIVATE PkgConfig::gmp)
 
+# add_executable(test python/test.cpp
+# ${SOURCES}
+# python/pyqmat.h 
+# python/pyqmat.cpp
+# )
+# target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR}/python
+#     include
+#     ${CMAKE_SOURCE_DIR}
+# )
+# target_link_libraries(test PRIVATE PkgConfig::gmp)
+
 

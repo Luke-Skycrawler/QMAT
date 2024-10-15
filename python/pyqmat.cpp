@@ -58,6 +58,24 @@ void QMAT::ComputeHausdorffDistance() {
 	slab_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
 }
 
+void QMAT::ExportMA(const std::string & fname) {
+  slab_mesh.Export(fname, &input);
+}
+void QMAT::ExportPly(const std::string & fname) {
+  slab_mesh.ExportPly(fname, &input);
+}
+
+std::vector<double> QMAT::export_hausdorff_distance(){
+  int nv = input.pVertexList.size();
+  std::vector<double> hausdoff(nv);
+  ComputeHausdorffDistance();
+  for (int i = 0; i < nv; i++) {
+    auto it = input.pVertexList[i];
+    hausdoff[i] = it-> slab_hausdorff_dist;
+  }
+  return hausdoff;
+}
+
 void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname) {
   std::ifstream mastream(maname.c_str());
   NonManifoldMesh newinputnmm;
@@ -358,8 +376,8 @@ QMAT::QMAT(const std::string &filename, const std::string &maname) {
   openmeshfile(&input, &slab_mesh, filename, maname);
 }
 void QMAT::simplifySlab(unsigned num_spheres) {
-  auto *slabMesh = &slab_mesh;
-  auto *mesh = &input;
+  SlabMesh *slabMesh = &slab_mesh;
+  Mesh *mesh = &input;
   slabMesh->CleanIsolatedVertices();
   // int threhold = min(10000, (int)(slabMesh->numVertices / 2));
   int threhold = num_spheres;

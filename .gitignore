@@ -5,3 +5,6 @@ backup/
 data/export_*
 extern/HouGeoIO/
 *.exe
+*.pyd
+*.dll
+output/

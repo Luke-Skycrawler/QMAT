@@ -23,5 +23,8 @@ PYBIND11_MODULE(pyqmat, m)
     py::class_<QMAT>(m, "qmat")
         .def(py::init<const std::string&, const std::string&>())
         .def("compute_hausdorff_distance", &QMAT::ComputeHausdorffDistance)
-        .def("simplify_slab", &QMAT::simplifySlab);
+        .def("simplify_slab", &QMAT::simplifySlab)
+        .def("export_ply", &QMAT::ExportPly)
+        .def("export_ma", &QMAT::ExportMA)
+        .def("export_hausdorff_distance", &QMAT::export_hausdorff_distance);
 }

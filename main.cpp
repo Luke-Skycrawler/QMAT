@@ -416,6 +416,7 @@ int main(int argc, char** argv) {
   simplifySlab(pslabMesh, pinput, num_spheres);
   printf("done simplifyslab\n");
   pslabMesh->ExportPly("export_half", pinput);
+  pslabMesh->Export("export_half", pinput);
   printf("done export\n");
 
   ps::init();
