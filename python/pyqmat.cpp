@@ -3,10 +3,6 @@
 #include "pyqmat.h"
 using namespace std;
 
-void QMATinh::QMATinh(const std::string &file, const std::string &maname)
-{
-  openmeshfile(&input, this, file, maname);
-}
 
 void computeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
 {
@@ -384,6 +380,9 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
 
 QMAT::QMAT(const std::string &filename, const std::string &maname) {
   openmeshfile(&input, &slab_mesh, filename, maname);
+}
+QMATinh::QMATinh(const std::string &filename, const std::string &maname) {
+  openmeshfile(&input, this, filename, maname);
 }
 void SimplifySlab(SlabMesh *slabMesh, Mesh *mesh, unsigned num_spheres)
 {
