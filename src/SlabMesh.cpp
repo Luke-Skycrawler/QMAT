@@ -2911,12 +2911,12 @@ void SlabMesh::ExportSimplifyResult()
 }
 
 void SlabMesh::ExportPly(std::string fname, Mesh* mesh) {
-    fname += "___v_";
-    fname += std::to_string(static_cast<long long>(numVertices));
-    fname += "___e_";
-    fname += std::to_string(static_cast<long long>(numEdges));
-    fname += "___f_";
-    fname += std::to_string(static_cast<long long>(numFaces));
+    // fname += "___v_";
+    // fname += std::to_string(static_cast<long long>(numVertices));
+    // fname += "___e_";
+    // fname += std::to_string(static_cast<long long>(numEdges));
+    // fname += "___f_";
+    // fname += std::to_string(static_cast<long long>(numFaces));
 
     AdjustStorage();
 
@@ -2959,12 +2959,12 @@ void SlabMesh::ExportPly(std::string fname, Mesh* mesh) {
 
 }
 void SlabMesh::Export(std::string fname, Mesh* mesh){
-    fname += "___v_";
-    fname += std::to_string(static_cast<long long>(numVertices));
-    fname += "___e_";
-    fname += std::to_string(static_cast<long long>(numEdges));
-    fname += "___f_";
-    fname += std::to_string(static_cast<long long>(numFaces));
+    // fname += "___v_";
+    // fname += std::to_string(static_cast<long long>(numVertices));
+    // fname += "___e_";
+    // fname += std::to_string(static_cast<long long>(numEdges));
+    // fname += "___f_";
+    // fname += std::to_string(static_cast<long long>(numFaces));
 
     AdjustStorage();
 

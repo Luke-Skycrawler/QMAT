@@ -429,8 +429,20 @@ void QMAT::simplifySlab(unsigned num_spheres)
 
 void QMATinh::simplify(int n)
 {
-  SimplifySlab(this, &input, n);
+  int num_delete = numVertices - n;
+  CleanIsolatedVertices();
+  compute_hausdorff = true;
+
+  Simplify(num_delete);
 }
+
+void QMATinh::clean_up()
+{
+  ComputeFacesNormal();
+  ComputeVerticesNormal();
+  ComputeEdgesCone();
+  ComputeFacesSimpleTriangles(); 
+} 
 void QMATinh::export_ply(const std::string &fname)
 {
   ExportPly(fname, &input);

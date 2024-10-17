@@ -21,6 +21,7 @@ struct QMATinh : public SlabMesh
     void simplify(int n);
     Mesh input;
     std::vector<double> hausdorff();
+    void clean_up();
     void export_ply(const std::string &fname);
     void export_ma(const std::string &fname);
 };

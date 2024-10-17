@@ -28,11 +28,12 @@ PYBIND11_MODULE(pyqmat, m)
         .def("export_ma", &QMAT::ExportMA)
         .def("export_hausdorff_distance", &QMAT::export_hausdorff_distance);
 
-
     py::class_<QMATinh>(m, "nqmat")
         .def(py::init<const std::string&, const std::string&>())
         .def("hausdorff", &QMATinh::hausdorff)
         .def("simplify", &QMATinh::simplify)
         .def("export_ply", &QMATinh::export_ply)
-        .def("export_ma", &QMATinh::export_ma);
+        .def("export_ma", &QMATinh::export_ma)
+        .def("clean_up", &QMATinh::clean_up)
+        .def("delete_n", &QMATinh::Simplify);
 }
