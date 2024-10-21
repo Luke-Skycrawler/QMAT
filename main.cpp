@@ -12,61 +12,57 @@ namespace ps = polyscope;
 void ComputeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
 {
 
-	//ma_qem_mesh.maxhausdorff_distance = 0.;
-	slab_mesh.maxhausdorff_distance = 0;
-	double sumhausdorff_distance = 0;
-	for (unsigned i = 0; i < input.pVertexList.size(); i++)
-	{
-		double min_dis = DBL_MAX;
-		unsigned min_index = -1;
-		Vector3d bou_ver(input.pVertexList[i]->point()[0], input.pVertexList[i]->point()[1], input.pVertexList[i]->point()[2]);
-		bou_ver /=  input.bb_diagonal_length; 
+  // ma_qem_mesh.maxhausdorff_distance = 0.;
+  slab_mesh.maxhausdorff_distance = 0;
+  double sumhausdorff_distance = 0;
+  for (unsigned i = 0; i < input.pVertexList.size(); i++)
+  {
+    double min_dis = DBL_MAX;
+    unsigned min_index = -1;
+    Vector3d bou_ver(input.pVertexList[i]->point()[0], input.pVertexList[i]->point()[1], input.pVertexList[i]->point()[2]);
+    bou_ver /= input.bb_diagonal_length;
 
-		for (unsigned j = 0; j < slab_mesh.numVertices; j++)
-		{
-			Sphere ma_ver = slab_mesh.vertices[j].second->sphere;
-			double temp_length = abs((bou_ver - ma_ver.center).Length() - ma_ver.radius);
-			//if (temp_length >= 0 && temp_length < min_dis)
-			if (temp_length < min_dis)
-			{
-				min_dis = temp_length;
-				min_index = j;
-			}
+    for (unsigned j = 0; j < slab_mesh.numVertices; j++)
+    {
+      Sphere ma_ver = slab_mesh.vertices[j].second->sphere;
+      double temp_length = abs((bou_ver - ma_ver.center).Length() - ma_ver.radius);
+      // if (temp_length >= 0 && temp_length < min_dis)
+      if (temp_length < min_dis)
+      {
+        min_dis = temp_length;
+        min_index = j;
+      }
+    }
 
+    if (min_index != -1)
+    {
+      double temp_near_dis = slab_mesh.NearestPoint(bou_ver, min_index);
+      min_dis = min(temp_near_dis, min_dis);
 
-		}
+      sumhausdorff_distance += min_dis;
 
+      // ma_qem_mesh.vertices[min_index].second->bplist.push_back(i);
+      // ma_qem_mesh.maxhausdorff_distance = max(ma_qem_mesh.maxhausdorff_distance, min_dis);
 
+      slab_mesh.vertices[min_index].second->bplist.insert(i);
+      slab_mesh.maxhausdorff_distance = max(slab_mesh.maxhausdorff_distance, min_dis);
 
-		if (min_index != -1)
-		{	
-			double temp_near_dis = slab_mesh.NearestPoint(bou_ver, min_index);
-			min_dis = min(temp_near_dis, min_dis);
+      // input.pVertexList[i]->vqem_hausdorff_dist = min_dis / input.bb_diagonal_length;
+      input.pVertexList[i]->vqem_hausdorff_dist = min_dis;
+      input.pVertexList[i]->vqem_hansdorff_index = min_index;
 
-			sumhausdorff_distance += min_dis;
+      // input.pVertexList[i]->slab_hausdorff_dist = min_dis / input.bb_diagonal_length;
+      input.pVertexList[i]->slab_hausdorff_dist = min_dis;
+      input.pVertexList[i]->slab_hansdorff_index = min_index;
+    }
+  }
 
-			//ma_qem_mesh.vertices[min_index].second->bplist.push_back(i);
-			//ma_qem_mesh.maxhausdorff_distance = max(ma_qem_mesh.maxhausdorff_distance, min_dis);
-
-			slab_mesh.vertices[min_index].second->bplist.insert(i);
-			slab_mesh.maxhausdorff_distance = max(slab_mesh.maxhausdorff_distance, min_dis);
-
-			//input.pVertexList[i]->vqem_hausdorff_dist = min_dis / input.bb_diagonal_length;
-			input.pVertexList[i]->vqem_hausdorff_dist = min_dis;
-			input.pVertexList[i]->vqem_hansdorff_index = min_index;
-
-			//input.pVertexList[i]->slab_hausdorff_dist = min_dis / input.bb_diagonal_length;
-			input.pVertexList[i]->slab_hausdorff_dist = min_dis;
-			input.pVertexList[i]->slab_hansdorff_index = min_index;
-		}
-	}
-	
-	//ma_qem_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
-	slab_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
+  // ma_qem_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
+  slab_mesh.meanhausdorff_distance = sumhausdorff_distance / input.pVertexList.size();
 }
 
-
-void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init_merged_list = true) {
+void LoadInputNMM(Mesh *input, SlabMesh *slabMesh, std::string maname, bool init_merged_list = true)
+{
   std::ifstream mastream(maname.c_str());
   NonManifoldMesh newinputnmm;
   newinputnmm.numVertices = 0;
@@ -93,7 +89,8 @@ void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init
         input->pVertexList[i]->point()[0], input->pVertexList[i]->point()[1],
         input->pVertexList[i]->point()[2]));
 
-  for (unsigned i = 0; i < nv; i++) {
+  for (unsigned i = 0; i < nv; i++)
+  {
     char ch;
     double x, y, z, r;
     mastream >> ch >> x >> y >> z >> r;
@@ -108,16 +105,18 @@ void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init
     (*bsvp2.second).sphere.radius = r / input->bb_diagonal_length;
     unsigned index = slabMesh->vertices.size();
     (*bsvp2.second).index = index;
-    if (init_merged_list) 
+    if (init_merged_list)
       (*bsvp2.second).merged_vertices = {index};
-    else {
+    else
+    {
       (*bsvp2.second).merged_vertices = {};
     }
     slabMesh->vertices.push_back(bsvp2);
     slabMesh->numVertices++;
   }
 
-  for (unsigned i = 0; i < ne; i++) {
+  for (unsigned i = 0; i < ne; i++)
+  {
     char ch;
     unsigned ver[2];
     mastream >> ch;
@@ -139,7 +138,8 @@ void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init
     slabMesh->numEdges++;
   }
 
-  for (unsigned i = 0; i < nf; i++) {
+  for (unsigned i = 0; i < nf; i++)
+  {
     char ch;
     unsigned vid[3];
     unsigned eid[3];
@@ -192,7 +192,8 @@ void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init
   slabMesh->DistinguishVertexType();
 }
 
-bool importMA(Mesh* input, SlabMesh* slabMesh, std::string maname) {
+bool importMA(Mesh *input, SlabMesh *slabMesh, std::string maname)
+{
   // std::string filename = filename + ".ma";
   // if (!std::filesystem::exists(filename)) {
   //     std::cerr << "Related .ma file is missing." << std::endl;
@@ -225,19 +226,23 @@ bool importMA(Mesh* input, SlabMesh* slabMesh, std::string maname) {
   return true;
 }
 
-void LoadSlabMesh(SlabMesh* slabMesh) {
+void LoadSlabMesh(SlabMesh *slabMesh)
+{
   slabMesh->clear();
   // long startt = clock();
   // handle each face
-  for (unsigned i = 0; i < slabMesh->vertices.size(); i++) {
-    if (!slabMesh->vertices[i].first) continue;
+  for (unsigned i = 0; i < slabMesh->vertices.size(); i++)
+  {
+    if (!slabMesh->vertices[i].first)
+      continue;
 
     SlabVertex sv = *slabMesh->vertices[i].second;
     std::set<unsigned> fset = sv.faces_;
     Vector4d C1(sv.sphere.center.X(), sv.sphere.center.Y(),
                 sv.sphere.center.Z(), sv.sphere.radius);
 
-    for (set<unsigned>::iterator si = fset.begin(); si != fset.end(); si++) {
+    for (set<unsigned>::iterator si = fset.begin(); si != fset.end(); si++)
+    {
       SlabFace sf = *slabMesh->faces[*si].second;
 
       if (sf.valid_st == false || sf.st[0].normal == Vector3d(0., 0., 0.) ||
@@ -277,30 +282,33 @@ void LoadSlabMesh(SlabMesh* slabMesh) {
     }
   }
 
-  switch (slabMesh->preserve_boundary_method) {
-    case 1:
-      slabMesh->PreservBoundaryMethodOne();
-      break;
-    case 2:
-      // slab_mesh.PreservBoundaryMethodTwo();
-      break;
-    case 3:
-      slabMesh->PreservBoundaryMethodThree();
-      break;
-    default:
-      slabMesh->PreservBoundaryMethodFour();
-      break;
+  switch (slabMesh->preserve_boundary_method)
+  {
+  case 1:
+    slabMesh->PreservBoundaryMethodOne();
+    break;
+  case 2:
+    // slab_mesh.PreservBoundaryMethodTwo();
+    break;
+  case 3:
+    slabMesh->PreservBoundaryMethodThree();
+    break;
+  default:
+    slabMesh->PreservBoundaryMethodFour();
+    break;
   }
 
   slabMesh->initCollapseQueue();
   // long endt = clock();
 }
 
-void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
-                  std::string maname) {
+void openmeshfile(Mesh *input, SlabMesh *slabMesh, std::string filename,
+                  std::string maname)
+{
   // QString filename = QFileDialog::getOpenFileName(this, tr("Select a 3D model
   // to open"), NULL, tr("3D model(*.off)"));
-  if (!filename.empty()) {
+  if (!filename.empty())
+  {
     // QDir qd(filename);
     std::string prefix = filename.substr(0, filename.size() - 4);
     // ThreeDimensionalShape * pThreeDimensionalShape = new
@@ -308,15 +316,16 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
     bool suc = false;
     std::ifstream stream(filename);
 
-    if (stream) {
+    if (stream)
+    {
       stream >> *input;
       // compute the properties of the input mesh
-      input->computebb();            // bounding box
-      input->GenerateList();         // generate vertex and triangle list
-      input->GenerateRandomColor();  // color of vertex and triangle
-      input->compute_normals();      // normal of vertex and triangle
+      input->computebb();           // bounding box
+      input->GenerateList();        // generate vertex and triangle list
+      input->GenerateRandomColor(); // color of vertex and triangle
+      input->compute_normals();     // normal of vertex and triangle
       // pThreeDimensionalShape->input_nmm.meshname = filename.;
-      cout << input->pVertexList.size() << " " << input->pFaceList.size()<< endl;
+      cout << input->pVertexList.size() << " " << input->pFaceList.size() << endl;
       std::ifstream streampol(filename);
       Polyhedron pol;
       streampol >> pol;
@@ -326,7 +335,8 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       // pdom = new Mesh_domain(pol);
       suc = true;
     }
-    if (suc) {
+    if (suc)
+    {
       // m_pThreeDimensionalShape = pThreeDimensionalShape;
       // //ui.actionShow_Edge->setChecked(true);
       //
@@ -334,9 +344,10 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
       // ui.actionReverse_Orientation->setChecked(true);
 
       // importVP(prefix);
-      slabMesh -> pmesh = input;
+      slabMesh->pmesh = input;
       bool re = importMA(input, slabMesh, maname);
-      if (re == false) return;
+      if (re == false)
+        return;
 
       float k = 0.00001;
       slabMesh->k = k;
@@ -361,14 +372,19 @@ void openmeshfile(Mesh* input, SlabMesh* slabMesh, std::string filename,
 
       // m_isSimplified = false;
       std::cout << "openmeshfile done." << std::endl;
-    } else {
     }
-  } else {
+    else
+    {
+    }
+  }
+  else
+  {
     std::cout << "Filename is empty !" << std::endl;
   }
 }
 
-void simplifySlab(SlabMesh* slabMesh, Mesh* mesh, unsigned num_spheres) {
+void simplifySlab(SlabMesh *slabMesh, Mesh *mesh, unsigned num_spheres)
+{
   slabMesh->CleanIsolatedVertices();
   // int threhold = min(10000, (int)(slabMesh->numVertices / 2));
   int threhold = num_spheres;
@@ -386,7 +402,7 @@ void simplifySlab(SlabMesh* slabMesh, Mesh* mesh, unsigned num_spheres) {
   // long start_time = clock();
   // slabMesh->initCollapseQueue();
   // slabMesh->initBoundaryCollapseQueue();
-  slabMesh-> compute_hausdorff = true;
+  slabMesh->compute_hausdorff = true;
   slabMesh->Simplify(slabMesh->numVertices - threhold);
   // long end_time = clock();
   //
@@ -403,112 +419,126 @@ void simplifySlab(SlabMesh* slabMesh, Mesh* mesh, unsigned num_spheres) {
   std::cout << "Simplify done." << std::endl;
 }
 
-
-struct PointAdder {
+struct PointAdder
+{
   std::vector<set<int>> collapsed_list;
   std::vector<int> included_in;
-  double diagonal; 
+  double diagonal;
   SlabMesh &fine, coarse;
-  PointAdder(double diag, SlabMesh &coarse, SlabMesh &fine): diagonal(diag), coarse(coarse), fine(fine) {}
-  int nearest_node(Vector3d p, SlabMesh &slabmesh) {
+  PointAdder(double diag, SlabMesh &coarse, SlabMesh &fine) : diagonal(diag), coarse(coarse), fine(fine) {}
+  int nearest_node(Vector3d p, SlabMesh &slabmesh)
+  {
     int min_idx = -1;
     double minl = DBL_MAX;
-    for (int i = 0; i < slabmesh.numVertices; i++) {
-      Vector3d pi = slabmesh.vertices[i].second -> sphere.center;
+    for (int i = 0; i < slabmesh.numVertices; i++)
+    {
+      Vector3d pi = slabmesh.vertices[i].second->sphere.center;
       double l = (pi - p).Length();
-      if (l < minl) {
+      if (l < minl)
+      {
         minl = l;
         min_idx = i;
       }
     }
     return min_idx;
   }
-  void generate_collapsed_list() {
+  void generate_collapsed_list()
+  {
     collapsed_list.resize(coarse.numVertices);
     included_in.resize(fine.numVertices);
 
-    for (int i = 0; i < fine.numVertices; i++) {
-      Vector3d pi = fine.vertices[i].second -> sphere.center;
+    for (int i = 0; i < fine.numVertices; i++)
+    {
+      Vector3d pi = fine.vertices[i].second->sphere.center;
       // int min_idx = -1;
       // double minl = DBL_MAX;
       int min_idx = nearest_node(pi, coarse);
       collapsed_list[min_idx].insert(i);
       included_in[i] = min_idx;
     }
-    for (int i = 0; i < coarse.numVertices; i++ ) {
+    for (int i = 0; i < coarse.numVertices; i++)
+    {
       assert(!collapsed_list[i].empty());
     }
-    
   }
 
-  void add_new_node(Sphere &new_sphere) {
+  void add_new_node(Sphere &new_sphere)
+  {
     int ik = nearest_node(new_sphere.center, coarse);
     int sigma = included_in[ik];
-    assert(collapsed_list[sigma].size() > 1); 
+    assert(collapsed_list[sigma].size() > 1);
     collapsed_list[sigma].erase(ik);
 
-    int id = coarse.numVertices ++;
+    int id = coarse.numVertices++;
     included_in[ik] = id;
     Bool_SlabVertexPointer bsvp;
-    bsvp.first=  true;
-    bsvp.second = new SlabVertex; 
+    bsvp.first = true;
+    bsvp.second = new SlabVertex;
     bsvp.second->sphere.center = new_sphere.center / diagonal;
-    bsvp.second -> sphere.radius = new_sphere.radius / diagonal;
-    bsvp.second ->index = id;
+    bsvp.second->sphere.radius = new_sphere.radius / diagonal;
+    bsvp.second->index = id;
     coarse.vertices.push_back(bsvp);
   }
 
-  void export_ply(const string &filename) {
+  void export_ply(const string &filename)
+  {
     string ply_name = filename + ".ply";
     std::ofstream fout(ply_name);
 
-
     int tot_prims = 0;
-    for (int i = 0; i < fine.edges.size(); i++) {
-      int uu = fine.edges[i].second -> vertices_.first;
-      int vv = fine.edges[i].second -> vertices_.second;
+    for (int i = 0; i < fine.edges.size(); i++)
+    {
+      int uu = fine.edges[i].second->vertices_.first;
+      int vv = fine.edges[i].second->vertices_.second;
       int u = included_in[uu];
       int v = included_in[vv];
-      if (u != v) {
+      if (u != v)
+      {
         // fout << "2 " << u << " " << v << std::endl;
-        tot_prims ++;
+        tot_prims++;
       }
     }
-    for (int i = 0; i < fine.faces.size(); i++) {
+    for (int i = 0; i < fine.faces.size(); i++)
+    {
       int idx[3];
 
       int j = 0;
-      for(auto it = fine.faces[i].second -> vertices_.begin(); it!= fine.faces[i].second -> vertices_.end(); it++) {
-        idx[j ++] = *it;
+      for (auto it = fine.faces[i].second->vertices_.begin(); it != fine.faces[i].second->vertices_.end(); it++)
+      {
+        idx[j++] = *it;
       }
 
       int u = included_in[idx[0]];
       int v = included_in[idx[1]];
       int w = included_in[idx[2]];
-      if (u == v && v == w) {
+      if (u == v && v == w)
+      {
         continue;
       }
-      else if (u != v && v != w && w != u) {
+      else if (u != v && v != w && w != u)
+      {
         // fout << "3 " << u << " " << v << " " << w << std::endl;
-        tot_prims ++;
+        tot_prims++;
       }
-      else {
-        if (u == v){
+      else
+      {
+        if (u == v)
+        {
           // fout << "2" << u << " " << w << std::endl;
-          tot_prims ++;
+          tot_prims++;
         }
-        if (v == w) {
+        if (v == w)
+        {
           // fout << "2" << u << " " << v << std::endl;
-          tot_prims ++;
+          tot_prims++;
         }
-        if (u == w) {
+        if (u == w)
+        {
           // fout << "2" << u << " " << v << std::endl;
-          tot_prims ++;
+          tot_prims++;
         }
       }
     }
-
-
 
     fout << "ply" << std::endl;
     fout << "format ascii 1.0" << std::endl;
@@ -521,45 +551,56 @@ struct PointAdder {
     fout << "property list uchar uint vertex_indices" << endl;
     fout << "end_header" << endl;
 
-    for (unsigned i = 0; i < coarse.numVertices; i++) {
-        auto &vertices {coarse.vertices};
-        fout << setiosflags(ios::fixed) << setprecision(15) << (vertices[i].second->sphere.center * diagonal) << " " << (vertices[i].second->sphere.radius * diagonal) << std::endl;
+    for (unsigned i = 0; i < coarse.numVertices; i++)
+    {
+      auto &vertices{coarse.vertices};
+      fout << setiosflags(ios::fixed) << setprecision(15) << (vertices[i].second->sphere.center * diagonal) << " " << (vertices[i].second->sphere.radius * diagonal) << std::endl;
     }
 
-    for (int i = 0; i < fine.edges.size(); i++) {
-      int uu = fine.edges[i].second -> vertices_.first;
-      int vv = fine.edges[i].second -> vertices_.second;
+    for (int i = 0; i < fine.edges.size(); i++)
+    {
+      int uu = fine.edges[i].second->vertices_.first;
+      int vv = fine.edges[i].second->vertices_.second;
       int u = included_in[uu];
       int v = included_in[vv];
-      if (u != v) {
+      if (u != v)
+      {
         fout << "2 " << u << " " << v << std::endl;
       }
     }
-    for (int i = 0; i < fine.faces.size(); i++) {
+    for (int i = 0; i < fine.faces.size(); i++)
+    {
       int idx[3];
 
       int j = 0;
-      for(auto it = fine.faces[i].second -> vertices_.begin(); it!= fine.faces[i].second -> vertices_.end(); it++) {
-        idx[j ++] = *it;
+      for (auto it = fine.faces[i].second->vertices_.begin(); it != fine.faces[i].second->vertices_.end(); it++)
+      {
+        idx[j++] = *it;
       }
 
       int u = included_in[idx[0]];
       int v = included_in[idx[1]];
       int w = included_in[idx[2]];
-      if (u == v && v == w) {
+      if (u == v && v == w)
+      {
         continue;
       }
-      else if (u != v && v != w && w != u) {
+      else if (u != v && v != w && w != u)
+      {
         fout << "3 " << u << " " << v << " " << w << std::endl;
       }
-      else {
-        if (u == v){
+      else
+      {
+        if (u == v)
+        {
           fout << "2" << u << " " << w << std::endl;
         }
-        if (v == w) {
+        if (v == w)
+        {
           fout << "2" << u << " " << v << std::endl;
         }
-        if (u == w) {
+        if (u == w)
+        {
           fout << "2" << u << " " << v << std::endl;
         }
       }
@@ -567,13 +608,14 @@ struct PointAdder {
   }
 };
 
-int main() {
+int main()
+{
   string input_name = "../data/spider.off";
   // string fine = "../data/spider_v100.ma";
   string fine = "../data/spider.ma";
   string coarse = "../data/spider_v25.ma";
-  Mesh input; 
-  SlabMesh slab_coarse, slab_fine; 
+  Mesh input;
+  SlabMesh slab_coarse, slab_fine;
   openmeshfile(&input, &slab_fine, input_name, fine);
   simplifySlab(&slab_fine, &input, 100);
   slab_fine.ExportPly("../output/spider_to100", &input);
@@ -581,25 +623,26 @@ int main() {
   slab_fine.initMergeList();
   slab_fine.initCollapseQueue();
   slab_fine.Simplify(75);
-  for (int i = 0; i < slab_fine.vertices.size(); i++) {
-      if (slab_fine.vertices[i].first) {
-    auto &list {slab_fine.vertices[i].second -> merged_vertices};
-    cout << i << ": { ";
-    for (auto j: list) {
-      cout << j << ",";
-    }
-    cout << "} " << endl;
-
+  for (int i = 0; i < slab_fine.vertices.size(); i++)
+  {
+    if (slab_fine.vertices[i].first)
+    {
+      auto &list{slab_fine.vertices[i].second->merged_vertices};
+      cout << i << ": { ";
+      for (auto j : list)
+      {
+        cout << j << ",";
       }
+      cout << "} " << endl;
+    }
   }
 
   // slab_fine.initCollapseQueue();
   // slab_fine.ExportPly("../output/spider_100to50", &input);
   // slab_fine.Simplify(25);
   slab_fine.ExportPly("../output/spider_50to25", &input);
-  
-  // LoadInputNMM(&input, &slab_coarse, coarse);
 
+  // LoadInputNMM(&input, &slab_coarse, coarse);
 
   // Sphere new_sphere = Sphere{Vector3d(-0.2176294 ,  0.06370435,  0.09288197), 0.1};
   // PointAdder adder(input.bb_diagonal_length, slab_coarse, slab_fine);
@@ -636,7 +679,7 @@ int main() {
 //   int nv = pinput ->pVertexList.size();
 //   int nf = pinput -> pFaceList.size();
 //   Eigen::MatrixXd V(nv, 3);
-//   Eigen::MatrixXi F(nf, 3); 
+//   Eigen::MatrixXi F(nf, 3);
 //   std::vector<double> hausdoff(nv);
 //   ComputeHausdorffDistance(slabMesh, input);
 //   for (int i = 0; i < nv; i++) {
