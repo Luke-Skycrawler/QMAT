@@ -1,5 +1,7 @@
 #include "SlabMesh.h"
 #include <omp.h>
+#include <algorithm>
+using namespace std;
 
 void SlabMesh::AdjustStorage()
 {
@@ -332,6 +334,10 @@ bool SlabMesh::MergeVertices(unsigned vid_src1, unsigned vid_src2, unsigned &vid
     if (vertices[vid_src1].second->saved_vertex || vertices[vid_src2].second->saved_vertex)
         vertices[vid_tgt].second->saved_vertex = true;
 
+    auto &list1 {vertices[vid_src1].second->merged_vertices};
+    auto &list2 {vertices[vid_src2].second->merged_vertices}; 
+    auto &list3 {vertices[vid_tgt].second->merged_vertices};
+    merge(list1.begin(), list1.end(), list2.begin(), list2.end(), back_inserter(list3));
     //if (vertices[vid_src1].second->fake_boundary_vertex || vertices[vid_src2].second->fake_boundary_vertex)
     //	vertices[vid_tgt].second->fake_boundary_vertex = true;
 
@@ -1919,7 +1925,7 @@ void SlabMesh::ReEvaluateEdgeHausdorffCost(unsigned eid)
 void SlabMesh::Simplify(int threshold){
 
     // 当简化到小于50个顶点时，不允许包含端点的边进行合并
-    if (numVertices <= 100)
+    if (numVertices <= 100 && false)
     {
         if (initial_boundary_preserve == false)
         {
@@ -1946,7 +1952,7 @@ void SlabMesh::Simplify(int threshold){
     }
 
     int deleteSphereNum = 0;
-    if (!boundary_edge_collapses_queue.empty())
+    if (!boundary_edge_collapses_queue.empty() && false)
     {
         while (deleteSphereNum < threshold && numVertices > 1 && !boundary_edge_collapses_queue.empty())
         {
@@ -1985,6 +1991,9 @@ void SlabMesh::Simplify(int threshold){
             //	GetSavedPointNumber();
         }
     }
+    
+    edge_collapses_queue = priority_queue<EdgeInfo>();
+    // clear all that remains in the queue
 }
 
 void SlabMesh::initCollapseQueue(){
@@ -2908,6 +2917,13 @@ void SlabMesh::ExportSimplifyResult()
     //f_result_out.open("Result.txt", ios::app);
 
     //f_result_out << simplified_boundary_edges << "\t" << simplified_inside_edges << "\t" << maxhausdorff_distance << endl;
+}
+
+void SlabMesh::initMergeList()
+{
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        vertices[i].second -> merged_vertices = {i};
+    }
 }
 
 void SlabMesh::ExportPly(std::string fname, Mesh* mesh) {

@@ -1,6 +1,6 @@
 #ifndef _SLABMESH_H
 #define _SLABMESH_H
-
+#include <vector>
 #include "PrimMesh.h"
 #include <Eigen/Dense>
 class SlabPrim
@@ -17,7 +17,8 @@ public:
     // hyperbolic weight
     double hyperbolic_weight;
 
-    SlabPrim() : slab_c(0.0), add_c(0.0), hyperbolic_weight(0.0){}
+    SlabPrim() : slab_c(0.0), add_c(0.0), hyperbolic_weight(0.0), merged_vertices({}){}
+    std::vector<unsigned> merged_vertices;
 };
 
 class SlabVertex : public PrimVertex, public SlabPrim
@@ -131,6 +132,7 @@ public:
 public:
     void initBoundaryCollapseQueue();
     void initCollapseQueue();
+    void initMergeList();
     void Simplify(int threshold);
     void SimplifyBoudary(int threshold);
     bool MinCostBoundaryEdgeCollapse(unsigned & eid);

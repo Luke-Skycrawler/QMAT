@@ -4,7 +4,9 @@
 #include "src/SlabMesh.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
-
+#include <assert.h>
+#include <set>
+using namespace std;
 namespace ps = polyscope;
 
 void ComputeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
@@ -64,7 +66,7 @@ void ComputeHausdorffDistance(SlabMesh &slab_mesh, Mesh &input)
 }
 
 
-void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname) {
+void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname, bool init_merged_list = true) {
   std::ifstream mastream(maname.c_str());
   NonManifoldMesh newinputnmm;
   newinputnmm.numVertices = 0;
@@ -104,7 +106,13 @@ void LoadInputNMM(Mesh* input, SlabMesh* slabMesh, std::string maname) {
     (*bsvp2.second).sphere.center[1] = y / input->bb_diagonal_length;
     (*bsvp2.second).sphere.center[2] = z / input->bb_diagonal_length;
     (*bsvp2.second).sphere.radius = r / input->bb_diagonal_length;
-    (*bsvp2.second).index = slabMesh->vertices.size();
+    unsigned index = slabMesh->vertices.size();
+    (*bsvp2.second).index = index;
+    if (init_merged_list) 
+      (*bsvp2.second).merged_vertices = {index};
+    else {
+      (*bsvp2.second).merged_vertices = {};
+    }
     slabMesh->vertices.push_back(bsvp2);
     slabMesh->numVertices++;
   }
@@ -387,66 +395,271 @@ void simplifySlab(SlabMesh* slabMesh, Mesh* mesh, unsigned num_spheres) {
   // ss << end_time - start_time;
   // ss >> res;
 
-  slabMesh->ComputeFacesNormal();
-  slabMesh->ComputeVerticesNormal();
-  slabMesh->ComputeEdgesCone();
-  slabMesh->ComputeFacesSimpleTriangles();
+  // slabMesh->ComputeFacesNormal();
+  // slabMesh->ComputeVerticesNormal();
+  // slabMesh->ComputeEdgesCone();
+  // slabMesh->ComputeFacesSimpleTriangles();
 
   std::cout << "Simplify done." << std::endl;
 }
 
-int main(int argc, char** argv) {
-  if (4 > argc) {
-    std::cerr << "Usage: " << argv[0]
-              << " <surface_mesh.off> <medial_mesh.ma> <num_target_spheres>"
-              << std::endl;
-    return 1;
-  }
-  std::string filename = argv[1];
-  std::string maname = argv[2];
-  unsigned num_spheres = atoi(argv[3]);
-  printf("reading off file %s\n", filename.c_str());
 
-  Mesh input;
-  Mesh* pinput = &input;
-  SlabMesh slabMesh;
-  SlabMesh* pslabMesh = &slabMesh;
-  openmeshfile(pinput, pslabMesh, filename, maname);
-  printf("done openmeshfile\n");
-  simplifySlab(pslabMesh, pinput, num_spheres);
-  printf("done simplifyslab\n");
-  pslabMesh->ExportPly("export_half", pinput);
-  pslabMesh->Export("export_half", pinput);
-  printf("done export\n");
-
-  ps::init();
-  int nv = pinput ->pVertexList.size();
-  int nf = pinput -> pFaceList.size();
-  Eigen::MatrixXd V(nv, 3);
-  Eigen::MatrixXi F(nf, 3); 
-  std::vector<double> hausdoff(nv);
-  ComputeHausdorffDistance(slabMesh, input);
-  for (int i = 0; i < nv; i++) {
-    auto it = input.pVertexList[i];
-    V.row(i) = Eigen::Vector3d(it->point()[0], it->point()[1], it->point()[2]);
-    hausdoff[i] = it-> slab_hausdorff_dist;
+struct PointAdder {
+  std::vector<set<int>> collapsed_list;
+  std::vector<int> included_in;
+  double diagonal; 
+  SlabMesh &fine, coarse;
+  PointAdder(double diag, SlabMesh &coarse, SlabMesh &fine): diagonal(diag), coarse(coarse), fine(fine) {}
+  int nearest_node(Vector3d p, SlabMesh &slabmesh) {
+    int min_idx = -1;
+    double minl = DBL_MAX;
+    for (int i = 0; i < slabmesh.numVertices; i++) {
+      Vector3d pi = slabmesh.vertices[i].second -> sphere.center;
+      double l = (pi - p).Length();
+      if (l < minl) {
+        minl = l;
+        min_idx = i;
+      }
+    }
+    return min_idx;
   }
-  for (int i = 0; i < nf; i++) {
-    auto it = input.pFaceList[i] -> facet_begin();
-    int i0 = it -> vertex() -> id;
-    int i1 = it -> next() -> vertex() -> id;
-    int i2 = it -> next() -> next() -> vertex() -> id;
-    F.row(i) = Eigen::Vector3i(i0, i1, i2);
+  void generate_collapsed_list() {
+    collapsed_list.resize(coarse.numVertices);
+    included_in.resize(fine.numVertices);
+
+    for (int i = 0; i < fine.numVertices; i++) {
+      Vector3d pi = fine.vertices[i].second -> sphere.center;
+      // int min_idx = -1;
+      // double minl = DBL_MAX;
+      int min_idx = nearest_node(pi, coarse);
+      collapsed_list[min_idx].insert(i);
+      included_in[i] = min_idx;
+    }
+    for (int i = 0; i < coarse.numVertices; i++ ) {
+      assert(!collapsed_list[i].empty());
+    }
+    
   }
 
-  auto input_mesh = ps::registerSurfaceMesh("input mesh", V, F);
-  input_mesh -> addVertexScalarQuantity("hausdorff", hausdoff);
+  void add_new_node(Sphere &new_sphere) {
+    int ik = nearest_node(new_sphere.center, coarse);
+    int sigma = included_in[ik];
+    assert(collapsed_list[sigma].size() > 1); 
+    collapsed_list[sigma].erase(ik);
 
-  // V = slabMesh.V();
-  // V *= 2.0;
-  // slabMesh.displace_vertices(V);
-  // slabMesh.Export("2x", pinput);
-  ps::show();
+    int id = coarse.numVertices ++;
+    included_in[ik] = id;
+    Bool_SlabVertexPointer bsvp;
+    bsvp.first=  true;
+    bsvp.second = new SlabVertex; 
+    bsvp.second->sphere.center = new_sphere.center / diagonal;
+    bsvp.second -> sphere.radius = new_sphere.radius / diagonal;
+    bsvp.second ->index = id;
+    coarse.vertices.push_back(bsvp);
+  }
 
+  void export_ply(const string &filename) {
+    string ply_name = filename + ".ply";
+    std::ofstream fout(ply_name);
+
+
+    int tot_prims = 0;
+    for (int i = 0; i < fine.edges.size(); i++) {
+      int uu = fine.edges[i].second -> vertices_.first;
+      int vv = fine.edges[i].second -> vertices_.second;
+      int u = included_in[uu];
+      int v = included_in[vv];
+      if (u != v) {
+        // fout << "2 " << u << " " << v << std::endl;
+        tot_prims ++;
+      }
+    }
+    for (int i = 0; i < fine.faces.size(); i++) {
+      int idx[3];
+
+      int j = 0;
+      for(auto it = fine.faces[i].second -> vertices_.begin(); it!= fine.faces[i].second -> vertices_.end(); it++) {
+        idx[j ++] = *it;
+      }
+
+      int u = included_in[idx[0]];
+      int v = included_in[idx[1]];
+      int w = included_in[idx[2]];
+      if (u == v && v == w) {
+        continue;
+      }
+      else if (u != v && v != w && w != u) {
+        // fout << "3 " << u << " " << v << " " << w << std::endl;
+        tot_prims ++;
+      }
+      else {
+        if (u == v){
+          // fout << "2" << u << " " << w << std::endl;
+          tot_prims ++;
+        }
+        if (v == w) {
+          // fout << "2" << u << " " << v << std::endl;
+          tot_prims ++;
+        }
+        if (u == w) {
+          // fout << "2" << u << " " << v << std::endl;
+          tot_prims ++;
+        }
+      }
+    }
+
+
+
+    fout << "ply" << std::endl;
+    fout << "format ascii 1.0" << std::endl;
+    fout << "element vertex " << coarse.numVertices << std::endl;
+    fout << "property float x" << endl;
+    fout << "property float y" << endl;
+    fout << "property float z" << endl;
+    fout << "property float r" << endl;
+    fout << "element face " << tot_prims << endl;
+    fout << "property list uchar uint vertex_indices" << endl;
+    fout << "end_header" << endl;
+
+    for (unsigned i = 0; i < coarse.numVertices; i++) {
+        auto &vertices {coarse.vertices};
+        fout << setiosflags(ios::fixed) << setprecision(15) << (vertices[i].second->sphere.center * diagonal) << " " << (vertices[i].second->sphere.radius * diagonal) << std::endl;
+    }
+
+    for (int i = 0; i < fine.edges.size(); i++) {
+      int uu = fine.edges[i].second -> vertices_.first;
+      int vv = fine.edges[i].second -> vertices_.second;
+      int u = included_in[uu];
+      int v = included_in[vv];
+      if (u != v) {
+        fout << "2 " << u << " " << v << std::endl;
+      }
+    }
+    for (int i = 0; i < fine.faces.size(); i++) {
+      int idx[3];
+
+      int j = 0;
+      for(auto it = fine.faces[i].second -> vertices_.begin(); it!= fine.faces[i].second -> vertices_.end(); it++) {
+        idx[j ++] = *it;
+      }
+
+      int u = included_in[idx[0]];
+      int v = included_in[idx[1]];
+      int w = included_in[idx[2]];
+      if (u == v && v == w) {
+        continue;
+      }
+      else if (u != v && v != w && w != u) {
+        fout << "3 " << u << " " << v << " " << w << std::endl;
+      }
+      else {
+        if (u == v){
+          fout << "2" << u << " " << w << std::endl;
+        }
+        if (v == w) {
+          fout << "2" << u << " " << v << std::endl;
+        }
+        if (u == w) {
+          fout << "2" << u << " " << v << std::endl;
+        }
+      }
+    }
+  }
+};
+
+int main() {
+  string input_name = "../data/spider.off";
+  // string fine = "../data/spider_v100.ma";
+  string fine = "../data/spider.ma";
+  string coarse = "../data/spider_v25.ma";
+  Mesh input; 
+  SlabMesh slab_coarse, slab_fine; 
+  openmeshfile(&input, &slab_fine, input_name, fine);
+  simplifySlab(&slab_fine, &input, 100);
+  slab_fine.ExportPly("../output/spider_to100", &input);
+
+  slab_fine.initMergeList();
+  slab_fine.initCollapseQueue();
+  slab_fine.Simplify(75);
+  for (int i = 0; i < slab_fine.vertices.size(); i++) {
+      if (slab_fine.vertices[i].first) {
+    auto &list {slab_fine.vertices[i].second -> merged_vertices};
+    cout << i << ": { ";
+    for (auto j: list) {
+      cout << j << ",";
+    }
+    cout << "} " << endl;
+
+      }
+  }
+
+  // slab_fine.initCollapseQueue();
+  // slab_fine.ExportPly("../output/spider_100to50", &input);
+  // slab_fine.Simplify(25);
+  slab_fine.ExportPly("../output/spider_50to25", &input);
+  
+  // LoadInputNMM(&input, &slab_coarse, coarse);
+
+
+  // Sphere new_sphere = Sphere{Vector3d(-0.2176294 ,  0.06370435,  0.09288197), 0.1};
+  // PointAdder adder(input.bb_diagonal_length, slab_coarse, slab_fine);
+  // adder.generate_collapsed_list();
+  // adder.add_new_node(new_sphere);
+  // adder.export_ply("../output/spider_v26");
   return 0;
 }
+// int main(int argc, char** argv) {
+//   if (4 > argc) {
+//     std::cerr << "Usage: " << argv[0]
+//               << " <surface_mesh.off> <medial_mesh.ma> <num_target_spheres>"
+//               << std::endl;
+//     return 1;
+//   }
+//   std::string filename = argv[1];
+//   std::string maname = argv[2];
+//   unsigned num_spheres = atoi(argv[3]);
+//   printf("reading off file %s\n", filename.c_str());
+
+//   Mesh input;
+//   Mesh* pinput = &input;
+//   SlabMesh slabMesh;
+//   SlabMesh* pslabMesh = &slabMesh;
+//   openmeshfile(pinput, pslabMesh, filename, maname);
+//   printf("done openmeshfile\n");
+//   simplifySlab(pslabMesh, pinput, num_spheres);
+//   printf("done simplifyslab\n");
+//   pslabMesh->ExportPly("export_half", pinput);
+//   pslabMesh->Export("export_half", pinput);
+//   printf("done export\n");
+
+//   ps::init();
+//   int nv = pinput ->pVertexList.size();
+//   int nf = pinput -> pFaceList.size();
+//   Eigen::MatrixXd V(nv, 3);
+//   Eigen::MatrixXi F(nf, 3); 
+//   std::vector<double> hausdoff(nv);
+//   ComputeHausdorffDistance(slabMesh, input);
+//   for (int i = 0; i < nv; i++) {
+//     auto it = input.pVertexList[i];
+//     V.row(i) = Eigen::Vector3d(it->point()[0], it->point()[1], it->point()[2]);
+//     hausdoff[i] = it-> slab_hausdorff_dist;
+//   }
+//   for (int i = 0; i < nf; i++) {
+//     auto it = input.pFaceList[i] -> facet_begin();
+//     int i0 = it -> vertex() -> id;
+//     int i1 = it -> next() -> vertex() -> id;
+//     int i2 = it -> next() -> next() -> vertex() -> id;
+//     F.row(i) = Eigen::Vector3i(i0, i1, i2);
+//   }
+
+//   auto input_mesh = ps::registerSurfaceMesh("input mesh", V, F);
+//   input_mesh -> addVertexScalarQuantity("hausdorff", hausdoff);
+
+//   // V = slabMesh.V();
+//   // V *= 2.0;
+//   // slabMesh.displace_vertices(V);
+//   // slabMesh.Export("2x", pinput);
+//   ps::show();
+
+//   return 0;
+// }
