@@ -6,15 +6,15 @@
 using uint = unsigned;
 struct SubGraph
 {
-    std::vector<uint> faces, vertices;
+    std::vector<uint> faces;
     std::set<std::pair<uint, uint>> edges;
     std::set<uint> vertices_set, taps;
     std::map<uint, std::vector<uint>> adjacency;
 
     bool critical(uint t);
     bool connected(uint u, uint v, uint r);
-    uint split(uint mx, std::vector<uint> &included_in, std::set<uint> &collapsed_list_x, std::set<uint> &collapsed_list_c);
-    SubGraph(std::vector<uint> &merged_list, SlabMesh &slabmesh);
+    uint split(uint mx, uint coase_id, std::vector<uint> &included_in, std::set<uint> &collapsed_list_x, std::set<uint> &collapsed_list_c);
+    SubGraph(std::set<uint> &merged_list, SlabMesh &fine);
 
     inline void make_tap(uint u)
     {

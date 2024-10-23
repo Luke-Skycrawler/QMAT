@@ -445,9 +445,9 @@ struct PointAdder
   double diagonal;
   SlabMesh &fine, coarse;
   PointAdder(double diag, SlabMesh &coarse, SlabMesh &fine) : diagonal(diag), coarse(coarse), fine(fine) {}
-  int nearest_node(Vector3d p, SlabMesh &slabmesh)
+  uint nearest_node(Vector3d p, SlabMesh &slabmesh)
   {
-    int min_idx = -1;
+    uint min_idx = 0;
     double minl = DBL_MAX;
     for (unsigned i = 0; i < slabmesh.numVertices; i++)
     {
@@ -500,18 +500,44 @@ struct PointAdder
   {
     new_sphere.center /= diagonal;
     new_sphere.radius /= diagonal;
-    int ik = nearest_node(new_sphere.center, fine);
+    uint ik = nearest_node(new_sphere.center, fine);
     int sigma = included_in[ik];
+
     cout << "ik = " << ik << "sigma = " << sigma;
     assert(collapsed_list[sigma].size() > 1);
     if (!collapsed_list[sigma].size() > 1)
     {
       exit(1);
     }
-    collapsed_list[sigma].erase(ik);
 
+    Sphere s_sigma = coarse.vertices[sigma].second->sphere;
+    SubGraph c_sg(collapsed_list[sigma], fine);
+    uint i_sigma = nearest_node(s_sigma.center, fine);
     int id = coarse.numVertices++;
-    included_in[ik] = id;
+    collapsed_list.push_back({});
+    if (c_sg.taps.count(ik) && c_sg.critical(ik))
+    {
+      included_in[ik] = id;
+      collapsed_list[id] = {ik};
+      collapsed_list[sigma].erase(ik);
+    }
+    else if (c_sg.taps.count(i_sigma) && c_sg.critical(i_sigma))
+    {
+      collapsed_list[id] = collapsed_list[sigma];
+      collapsed_list[id].erase(i_sigma);
+      for (auto i : collapsed_list[sigma])
+      {
+        included_in[i] = id;
+      }
+      collapsed_list[sigma] = {i_sigma};
+    }
+    else
+    {
+      c_sg.split(ik, id, included_in, collapsed_list[id], collapsed_list[sigma]);
+    }
+    // collapsed_list[sigma].erase(ik);
+
+    // included_in[ik] = id;
     Bool_SlabVertexPointer bsvp;
     bsvp.first = true;
     bsvp.second = new SlabVertex;

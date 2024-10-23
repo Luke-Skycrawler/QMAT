@@ -5,12 +5,12 @@ using namespace std;
 
 // construct merged subgraph for coarse mesh vertex u
 // from merged vertices list
-SubGraph::SubGraph(vector<uint> &merged, SlabMesh &coarse) : vertices_set(merged.begin(), merged.end()), vertices(merged)
+SubGraph::SubGraph(set<uint> &merged, SlabMesh &fine) : vertices_set(merged)
 {
     std::set<uint> vset;
-    for (int i = 0; i < coarse.edges.size(); i++)
+    for (int i = 0; i < fine.edges.size(); i++)
     {
-        auto &e{coarse.edges[i].second->vertices_};
+        auto &e{fine.edges[i].second->vertices_};
         int u = e.first;
         int v = e.second;
 
@@ -33,10 +33,10 @@ SubGraph::SubGraph(vector<uint> &merged, SlabMesh &coarse) : vertices_set(merged
             }
         }
     }
-    for (int i = 0; i < coarse.faces.size(); i++)
+    for (int i = 0; i < fine.faces.size(); i++)
     {
         int idx[3];
-        auto &f{coarse.faces[i].second->vertices_};
+        auto &f{fine.faces[i].second->vertices_};
         int j = 0;
         for (auto it = f.begin(); it != f.end(); it++)
         {
@@ -147,17 +147,34 @@ bool SubGraph::connected(uint u, uint v, uint r)
 // if u == x, it means x is a sigle-point subgraph
 // otherwise, c becomes a single-point subgraph {u}, and x gets the rest of the elements
 // fixme: for the single point subgraph, it might has some dangling edges that are not connected to the outside as a tap. These vertices should also be added to the one-point subgraph
-uint SubGraph::split(uint x, vector<uint> &included_in, set<uint> &merged_x, set<uint> &merged_c)
+uint SubGraph::split(uint x, uint coarse_id, vector<uint> &included_in, set<uint> &merged_x, set<uint> &merged_c)
 {
+    uint ret = 1<<30;
     for (auto u : taps)
     {
         if (critical(u))
             continue;
 
         // u is non-critical, returns
-        return u;
+        ret = u;
+        break;
     }
-    // must exists one non-critical tap
-    assert(false);
+    if (ret == x) {
+        included_in[x] = coarse_id;
+        merged_x = {x};
+        merged_c.erase(x);
+    }
+    else {
+        merged_x = merged_c;
+        merged_x.erase(ret);
+        for (auto i: merged_x) {
+            included_in[i] = coarse_id;
+        }
+        merged_c = {x};
+    }
+    if (ret == 1 << 30) {
+        // must exists one non-critical tap
+        assert(false);
+    }
     return 0;
 }
