@@ -4,6 +4,7 @@
 #include "src/SlabMesh.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+#include "subgraph.h"
 #include <assert.h>
 #include <set>
 using namespace std;
@@ -383,23 +384,23 @@ void openmeshfile(Mesh *input, SlabMesh *slabMesh, std::string filename,
   }
 }
 
-void initialize_slab(Mesh *input, SlabMesh *slabMesh, std::string maname) {
-      slabMesh->pmesh = input;
-      bool re = importMA(input, slabMesh, maname);
-      if (re == false)
-        return;
+void initialize_slab(Mesh *input, SlabMesh *slabMesh, std::string maname)
+{
+  slabMesh->pmesh = input;
+  bool re = importMA(input, slabMesh, maname);
+  if (re == false)
+    return;
 
-      float k = 0.00001;
-      slabMesh->k = k;
-      // initialize();
-      slabMesh->preserve_boundary_method = 0;
-      slabMesh->hyperbolic_weight_type = 3;
-      slabMesh->compute_hausdorff = true;
-      slabMesh->boundary_compute_scale = 0;
-      slabMesh->prevent_inversion = false;
+  float k = 0.00001;
+  slabMesh->k = k;
+  // initialize();
+  slabMesh->preserve_boundary_method = 0;
+  slabMesh->hyperbolic_weight_type = 3;
+  slabMesh->compute_hausdorff = true;
+  slabMesh->boundary_compute_scale = 0;
+  slabMesh->prevent_inversion = false;
 
-      LoadSlabMesh(slabMesh);
-
+  LoadSlabMesh(slabMesh);
 }
 void simplifySlab(SlabMesh *slabMesh, Mesh *mesh, unsigned num_spheres)
 {
@@ -461,11 +462,14 @@ struct PointAdder
     return min_idx;
   }
 
-  void set_collapsed_list(const std::vector<std::vector<unsigned>> &merged_list) {
+  void set_collapsed_list(const std::vector<std::vector<unsigned>> &merged_list)
+  {
     collapsed_list.resize(coarse.numVertices);
     included_in.resize(fine.numVertices);
-    for (int i = 0; i < coarse.numVertices; i++){
-      for (auto j: merged_list[i]) {
+    for (int i = 0; i < coarse.numVertices; i++)
+    {
+      for (auto j : merged_list[i])
+      {
 
         collapsed_list[i].insert(j);
         included_in[j] = i;
@@ -494,13 +498,14 @@ struct PointAdder
 
   void add_new_node(Sphere &new_sphere)
   {
-      new_sphere.center /= diagonal;
-      new_sphere.radius /= diagonal;
+    new_sphere.center /= diagonal;
+    new_sphere.radius /= diagonal;
     int ik = nearest_node(new_sphere.center, fine);
     int sigma = included_in[ik];
     cout << "ik = " << ik << "sigma = " << sigma;
     assert(collapsed_list[sigma].size() > 1);
-    if (!collapsed_list[sigma].size() > 1) {
+    if (!collapsed_list[sigma].size() > 1)
+    {
       exit(1);
     }
     collapsed_list[sigma].erase(ik);
@@ -644,7 +649,8 @@ struct PointAdder
   }
 };
 
-std::vector<std::vector<unsigned>> test_reentrant() {
+std::vector<std::vector<unsigned>> test_reentrant()
+{
   string input_name = "../data/spider.off";
   // string fine = "../data/spider_v100.ma";
   string fine = "../data/spider.ma";
@@ -657,27 +663,27 @@ std::vector<std::vector<unsigned>> test_reentrant() {
   slabmesh.initMergeList();
   slabmesh.initCollapseQueue();
   slabmesh.Simplify(75);
-  
 
   slabmesh.ExportPly("../output/spider_100to25", &input);
   std::vector<std::vector<unsigned>> L;
   for (int i = 0; i < slabmesh.vertices.size(); i++)
   {
-      if (slabmesh.vertices[i].first)
+    if (slabmesh.vertices[i].first)
+    {
+      auto &list{slabmesh.vertices[i].second->merged_vertices};
+      cout << i << ": { ";
+      for (auto j : list)
       {
-          auto& list{ slabmesh.vertices[i].second->merged_vertices };
-          cout << i << ": { ";
-          for (auto j : list)
-          {
-              cout << j << ",";
-          }
-          cout << "} " << endl;
-          L.push_back(list);
+        cout << j << ",";
       }
+      cout << "} " << endl;
+      L.push_back(list);
+    }
   }
   return L;
 }
-void test_add_sphere(){
+void test_add_sphere()
+{
   string input_name = "../data/spider.off";
   string fine = "../data/spider_v100.ma";
   string coarse = "../data/spider_v25.ma";
@@ -686,13 +692,12 @@ void test_add_sphere(){
   openmeshfile(&input, &slab_fine, input_name, fine);
 
   initialize_slab(&input, &slab_coarse, coarse);
-  Sphere new_sphere = Sphere{Vector3d(-0.2176294 ,  0.06370435,  0.09288197), 0.04448237};
+  Sphere new_sphere = Sphere{Vector3d(-0.2176294, 0.06370435, 0.09288197), 0.04448237};
   PointAdder adder(input.bb_diagonal_length, slab_coarse, slab_fine);
   // adder.generate_collapsed_list();
   adder.set_collapsed_list(test_reentrant());
   adder.add_new_node(new_sphere);
   adder.export_ply("../output/spider_v26");
-
 }
 
 int main()
