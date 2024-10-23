@@ -15,7 +15,7 @@ struct SubGraph
     bool connected(uint u, uint v, uint r);
     uint split(uint mx, uint coase_id, std::vector<uint> &included_in, std::set<uint> &collapsed_list_x, std::set<uint> &collapsed_list_c);
     SubGraph(std::set<uint> &merged_list, SlabMesh &fine);
-
+    std::vector<uint> non_critical_taps();
     inline void make_tap(uint u)
     {
         taps.insert(u);

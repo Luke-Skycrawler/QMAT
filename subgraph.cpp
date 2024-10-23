@@ -178,3 +178,16 @@ uint SubGraph::split(uint x, uint coarse_id, vector<uint> &included_in, set<uint
     }
     return 0;
 }
+
+vector<uint> SubGraph::non_critical_taps()
+{
+    vector<uint> ret;
+    for (auto i : taps)
+    {
+        if (!critical(i))
+        {
+            ret.push_back(i);
+        }
+    }
+    return ret;
+}
