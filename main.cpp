@@ -383,6 +383,24 @@ void openmeshfile(Mesh *input, SlabMesh *slabMesh, std::string filename,
   }
 }
 
+void initialize_slab(Mesh *input, SlabMesh *slabMesh, std::string maname) {
+      slabMesh->pmesh = input;
+      bool re = importMA(input, slabMesh, maname);
+      if (re == false)
+        return;
+
+      float k = 0.00001;
+      slabMesh->k = k;
+      // initialize();
+      slabMesh->preserve_boundary_method = 0;
+      slabMesh->hyperbolic_weight_type = 3;
+      slabMesh->compute_hausdorff = true;
+      slabMesh->boundary_compute_scale = 0;
+      slabMesh->prevent_inversion = false;
+
+      LoadSlabMesh(slabMesh);
+
+}
 void simplifySlab(SlabMesh *slabMesh, Mesh *mesh, unsigned num_spheres)
 {
   slabMesh->CleanIsolatedVertices();
@@ -476,8 +494,11 @@ struct PointAdder
 
   void add_new_node(Sphere &new_sphere)
   {
-    int ik = nearest_node(new_sphere.center, coarse);
+      new_sphere.center /= diagonal;
+      new_sphere.radius /= diagonal;
+    int ik = nearest_node(new_sphere.center, fine);
     int sigma = included_in[ik];
+    cout << "ik = " << ik << "sigma = " << sigma;
     assert(collapsed_list[sigma].size() > 1);
     if (!collapsed_list[sigma].size() > 1) {
       exit(1);
@@ -489,8 +510,8 @@ struct PointAdder
     Bool_SlabVertexPointer bsvp;
     bsvp.first = true;
     bsvp.second = new SlabVertex;
-    bsvp.second->sphere.center = new_sphere.center / diagonal;
-    bsvp.second->sphere.radius = new_sphere.radius / diagonal;
+    bsvp.second->sphere.center = new_sphere.center;
+    bsvp.second->sphere.radius = new_sphere.radius;
     bsvp.second->index = id;
     coarse.vertices.push_back(bsvp);
   }
@@ -663,10 +684,9 @@ void test_add_sphere(){
   Mesh input;
   SlabMesh slab_coarse, slab_fine;
   openmeshfile(&input, &slab_fine, input_name, fine);
-  slab_fine.ExportPly("../output/spider_50to25", &input);
 
-  LoadInputNMM(&input, &slab_coarse, coarse);
-  Sphere new_sphere = Sphere{Vector3d(-0.2176294 ,  0.06370435,  0.09288197), 0.1};
+  initialize_slab(&input, &slab_coarse, coarse);
+  Sphere new_sphere = Sphere{Vector3d(-0.2176294 ,  0.06370435,  0.09288197), 0.04448237};
   PointAdder adder(input.bb_diagonal_length, slab_coarse, slab_fine);
   // adder.generate_collapsed_list();
   adder.set_collapsed_list(test_reentrant());
