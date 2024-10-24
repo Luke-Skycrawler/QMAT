@@ -96,10 +96,11 @@ void PointAdder::add_new_node(Sphere &new_sphere)
     uint ik = nearest_node(new_sphere.center, fine);
     int sigma = included_in[ik];
 
-    cout << "ik = " << ik << "sigma = " << sigma;
+    // cout << "ik = " << ik << " sigma = " << sigma;
     assert(collapsed_list[sigma].size() > 1);
     if (!collapsed_list[sigma].size() > 1)
-    {
+    {   
+        cout << "error: nearest non-collapsed node not found. ik = " << ik << " sigma = " << sigma;
         exit(1);
     }
 

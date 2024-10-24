@@ -60,8 +60,13 @@ set(SOURCES
         src/GeometryObjects.h
         src/NonManifoldMesh.cpp
         src/NonManifoldMesh.h
+
+        subgraph.cpp 
+        subgraph.h 
+        point_adder.cpp 
+        point_adder.h
 )
-add_executable(QMAT main.cpp subgraph.cpp subgraph.h point_adder.cpp point_adder.h ${SOURCES})
+add_executable(QMAT main.cpp ${SOURCES})
 target_link_libraries(QMAT HouGeoIO polyscope)
 pybind11_add_module(pyqmat ${SOURCES} 
 python/bindings.cpp 

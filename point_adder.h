@@ -23,5 +23,8 @@ struct PointAdder
 
     void generate_collapsed_list();
     void add_new_node(Sphere &new_sphere);
+    void add_new_noded(double x, double y, double z, double r){
+        add_new_node(Sphere{Vector3d(x, y, z), r});
+    }
     void export_ply(const std::string &filename);
 };
