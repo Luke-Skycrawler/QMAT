@@ -41,7 +41,10 @@ include_directories(${CMAKE_SOURCE_DIR}/extern/polyscope/include)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/HouGeoIO)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/polyscope)
 
-set(SOURCES src/SlabMesh.h
+set(SOURCES 
+        util.h
+        util.cpp
+        src/SlabMesh.h
         src/SlabMesh.cpp
         src/Wm4Math.cpp
         src/Wm4Math.h
