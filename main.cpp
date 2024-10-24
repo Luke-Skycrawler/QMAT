@@ -23,22 +23,7 @@ std::vector<std::vector<unsigned>> test_reentrant()
   slabmesh.Simplify(75);
 
   slabmesh.ExportPly("../output/spider_100to25", &input);
-  std::vector<std::vector<unsigned>> L;
-  for (int i = 0; i < slabmesh.vertices.size(); i++)
-  {
-    if (slabmesh.vertices[i].first)
-    {
-      auto &list{slabmesh.vertices[i].second->merged_vertices};
-      cout << i << ": { ";
-      for (auto j : list)
-      {
-        cout << j << ",";
-      }
-      cout << "} " << endl;
-      L.push_back(list);
-    }
-  }
-  return L;
+  return slabmesh.exportMergeList();  
 }
 void test_add_sphere()
 {

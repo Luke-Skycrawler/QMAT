@@ -2926,6 +2926,25 @@ void SlabMesh::initMergeList()
     }
 }
 
+std::vector<std::vector<unsigned>> SlabMesh::exportMergeList()
+{
+    std::vector<std::vector<unsigned>> L;
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        if (vertices[i].first)
+        {
+            auto &list{vertices[i].second->merged_vertices};
+            // cout << i << ": { ";
+            // for (auto j : list)
+            // {
+            //     cout << j << ",";
+            // }
+            // cout << "} " << endl;
+            L.push_back(list);
+        }
+    }
+    return L;
+}
 void SlabMesh::ExportPly(std::string fname, Mesh* mesh) {
     // fname += "___v_";
     // fname += std::to_string(static_cast<long long>(numVertices));

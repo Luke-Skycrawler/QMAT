@@ -133,6 +133,7 @@ public:
     void initBoundaryCollapseQueue();
     void initCollapseQueue();
     void initMergeList();
+    std::vector<std::vector<unsigned>> exportMergeList();
     void Simplify(int threshold);
     void SimplifyBoudary(int threshold);
     bool MinCostBoundaryEdgeCollapse(unsigned & eid);

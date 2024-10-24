@@ -22,18 +22,13 @@ PYBIND11_MODULE(pyqmat, m)
 
     py::class_<QMAT>(m, "qmat")
         .def(py::init<const std::string&, const std::string&>())
-        .def("compute_hausdorff_distance", &QMAT::ComputeHausdorffDistance)
-        .def("simplify_slab", &QMAT::simplifySlab)
-        .def("export_ply", &QMAT::ExportPly)
-        .def("export_ma", &QMAT::ExportMA)
-        .def("export_hausdorff_distance", &QMAT::export_hausdorff_distance);
-
-    py::class_<QMATinh>(m, "nqmat")
-        .def(py::init<const std::string&, const std::string&>())
-        .def("hausdorff", &QMATinh::hausdorff)
-        .def("simplify", &QMATinh::simplify)
-        .def("export_ply", &QMATinh::export_ply)
-        .def("export_ma", &QMATinh::export_ma)
-        .def("clean_up", &QMATinh::clean_up)
-        .def("delete_n", &QMATinh::Simplify);
+        .def("hausdorff", &QMAT::hausdorff)
+        .def("simplify_slab", &QMAT::simplify_slab)
+        .def("export_ply", &QMAT::export_ply)
+        .def("init_mergelist", &QMAT::initMergeList)
+        .def("init_collapse_queue", &QMAT::initCollapseQueue)
+        .def("simplify", &QMAT::Simplify)
+        .def("adjust_storage", &QMAT::AdjustStorage)
+        .def("export_mergelist", &QMAT::exportMergeList)
+        .def("export_ma", &QMAT::export_ma);
 }
