@@ -146,7 +146,7 @@ void PointAdder::add_new_node(Sphere &new_sphere)
     // included_in[ik] = id;
     Bool_SlabVertexPointer bsvp;
     bsvp.first = true;
-    bsvp.second = new SlabVertex;
+    bsvp.second = make_shared<SlabVertex>();
     bsvp.second->sphere.center = new_sphere.center;
     bsvp.second->sphere.radius = new_sphere.radius;
     bsvp.second->index = id;

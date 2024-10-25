@@ -100,7 +100,7 @@ void LoadInputNMM(Mesh *input, SlabMesh *slabMesh, std::string maname, bool init
         // handle the slab mesh
         Bool_SlabVertexPointer bsvp2;
         bsvp2.first = true;
-        bsvp2.second = new SlabVertex;
+        bsvp2.second = make_shared<SlabVertex>();
         (*bsvp2.second).sphere.center[0] = x / input->bb_diagonal_length;
         (*bsvp2.second).sphere.center[1] = y / input->bb_diagonal_length;
         (*bsvp2.second).sphere.center[2] = z / input->bb_diagonal_length;
@@ -128,7 +128,7 @@ void LoadInputNMM(Mesh *input, SlabMesh *slabMesh, std::string maname, bool init
         // handle the slab mesh
         Bool_SlabEdgePointer bsep2;
         bsep2.first = true;
-        bsep2.second = new SlabEdge;
+        bsep2.second = make_shared<SlabEdge>();
         (*bsep2.second).vertices_.first = ver[0];
         (*bsep2.second).vertices_.second = ver[1];
         (*slabMesh->vertices[(*bsep2.second).vertices_.first].second)
@@ -150,7 +150,7 @@ void LoadInputNMM(Mesh *input, SlabMesh *slabMesh, std::string maname, bool init
         // handle the slab mesh
         Bool_SlabFacePointer bsfp2;
         bsfp2.first = true;
-        bsfp2.second = new SlabFace;
+        bsfp2.second = make_shared<SlabFace>();
         (*bsfp2.second).vertices_.insert(vid[0]);
         (*bsfp2.second).vertices_.insert(vid[1]);
         (*bsfp2.second).vertices_.insert(vid[2]);

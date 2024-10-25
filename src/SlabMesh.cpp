@@ -329,7 +329,7 @@ bool SlabMesh::MergeVertices(unsigned vid_src1, unsigned vid_src2, unsigned &vid
         return false;
 
     unsigned eid;
-    InsertVertex(new SlabVertex, vid_tgt);
+    InsertVertex(std::make_shared<SlabVertex>(), vid_tgt);
 
     if (vertices[vid_src1].second->saved_vertex || vertices[vid_src2].second->saved_vertex)
         vertices[vid_tgt].second->saved_vertex = true;
@@ -440,7 +440,7 @@ void SlabMesh::DeleteFace(unsigned fid)
         si != faces[fid].second->edges_.end(); si ++)
         edges[*si].second->faces_.erase(fid);
 
-    delete faces[fid].second;
+    //delete faces[fid].second;
     faces[fid].first = false;
     numFaces --;
 }
@@ -478,7 +478,7 @@ void SlabMesh::DeleteEdge(unsigned eid)
     for(std::set<unsigned>::iterator si = faces_del.begin(); si != faces_del.end(); si ++)
         DeleteFace(*si);
 
-    delete edges[eid].second;
+    //delete edges[eid].second;
     edges[eid].first = false;
     numEdges --;
 }
@@ -504,12 +504,12 @@ void SlabMesh::DeleteVertex(unsigned vid)
     for(std::set<unsigned>::iterator si = faces_del.begin(); si != faces_del.end(); si ++)
         DeleteFace(*si);
 
-    delete vertices[vid].second;
+    //delete vertices[vid].second;
     vertices[vid].first = false;
     numVertices --;
 }
 
-void SlabMesh::InsertVertex(SlabVertex *vertex, unsigned &vid){
+void SlabMesh::InsertVertex(std::shared_ptr<SlabVertex> vertex, unsigned &vid){
     Bool_SlabVertexPointer bvp;
     bvp.first = true;
     bvp.second = vertex;
@@ -530,7 +530,7 @@ void SlabMesh::InsertEdge(unsigned vid0, unsigned vid1, unsigned & eid)
     }
     Bool_SlabEdgePointer bep;
     bep.first = true;
-    bep.second = new SlabEdge;
+    bep.second = std::make_shared<SlabEdge>();
     bep.second->vertices_.first = vid0;
     bep.second->vertices_.second = vid1;
     vertices[vid0].second->edges_.insert((unsigned)edges.size());
@@ -571,7 +571,7 @@ void SlabMesh::InsertFace(std::set<unsigned> vset)
 
     Bool_SlabFacePointer bfp;
     bfp.first = true;
-    bfp.second = new SlabFace;
+    bfp.second = make_shared<SlabFace>();
     bfp.second->vertices_.insert(vid[0]);
     bfp.second->vertices_.insert(vid[1]);
     bfp.second->vertices_.insert(vid[2]);
@@ -599,7 +599,7 @@ void SlabMesh::CleanIsolatedVertices()
         {
             if( (vertices[i].second->edges_.size() == 0) && (vertices[i].second->faces_.size() == 0) )
             {
-                delete vertices[i].second;
+                //delete vertices[i].second;
                 vertices[i].first = false;
                 numVertices --;
             }
@@ -872,7 +872,7 @@ void SlabMesh::InsertSavedPoint(unsigned vid)
         return;
 
     unsigned vid_tgt;
-    InsertVertex(new SlabVertex, vid_tgt);
+    InsertVertex(make_shared<SlabVertex>(), vid_tgt);
 
     std::vector< std::set<unsigned> > tri_vec;
     for(std::set<unsigned>::iterator si = vertices[vid].second->faces_.begin();

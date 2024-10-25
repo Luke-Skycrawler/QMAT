@@ -3,6 +3,7 @@
 #include <vector>
 #include "PrimMesh.h"
 #include <Eigen/Dense>
+#include <memory>
 class SlabPrim
 {
 public:
@@ -38,9 +39,9 @@ class SlabFace : public PrimFace, public SlabPrim
 {
 };
 
-typedef std::pair<bool, SlabVertex*> Bool_SlabVertexPointer;
-typedef std::pair<bool, SlabEdge*> Bool_SlabEdgePointer;
-typedef std::pair<bool, SlabFace*> Bool_SlabFacePointer;
+typedef std::pair<bool, std::shared_ptr<SlabVertex>> Bool_SlabVertexPointer;
+typedef std::pair<bool, std::shared_ptr<SlabEdge>> Bool_SlabEdgePointer;
+typedef std::pair<bool, std::shared_ptr<SlabFace>> Bool_SlabFacePointer;
 
 class SlabMesh : public PrimMesh
 {
@@ -89,7 +90,6 @@ public:
 
 public:
     void AdjustStorage();
-
 public:
     bool ValidVertex(unsigned vid);
     bool Edge(unsigned vid0, unsigned vid1, unsigned & eid);
@@ -117,7 +117,7 @@ public:
     void DeleteEdge(unsigned eid);
     void DeleteVertex(unsigned vid);
 
-    void InsertVertex(SlabVertex *vertex, unsigned &vid);
+    void InsertVertex(std::shared_ptr<SlabVertex> vertex, unsigned &vid);
     void InsertEdge(unsigned vid0, unsigned vid1, unsigned & eid);
     void InsertFace(std::set<unsigned> vset);
 
