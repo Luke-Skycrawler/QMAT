@@ -29,7 +29,7 @@ void test_add_sphere()
 {
   string input_name = "../data/spider.off";
   //string fine = "../data/spider_v100.ma";
-  string fine = "../data/spider_v100.ma";
+  string fine = "../data/spider.ma";
   string coarse = "../data/spider_v25.ma";
   Mesh input;
   SlabMesh slab_coarse, slab_fine;
@@ -41,8 +41,11 @@ void test_add_sphere()
   Sphere new_sphere = Sphere{Vector3d(-0.2176294, 0.06370435, 0.09288197), 0.04448237};
   PointAdder adder(input.bb_diagonal_length, slab_coarse, slab_fine);
   // adder.generate_collapsed_list();
-  adder.set_collapsed_list(test_reentrant());
-  adder.add_new_node(new_sphere);
+  // adder.set_collapsed_list(test_reentrant());
+  //auto L = test_reentrant();
+  auto L = adder.export_merge_list();
+  adder.set_collapsed_list(L);
+  //adder.add_new_node(new_sphere);
   adder.export_ply("../output/spider_v26");
 }
 

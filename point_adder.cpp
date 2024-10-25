@@ -279,3 +279,15 @@ void PointAdder::export_ply(const string &filename)
         }
     }
 }
+
+std::vector<std::vector<unsigned>> PointAdder::export_merge_list() const{
+    SlabMesh copy_fine {fine};
+    copy_fine.initMergeList();
+    copy_fine.initCollapseQueue();
+    int n_fine = fine.numVertices;
+    int n_coarse = coarse.numVertices;
+    
+    copy_fine.Simplify(n_fine - n_coarse);
+    copy_fine.AdjustStorage();
+    return copy_fine.exportMergeList();
+}

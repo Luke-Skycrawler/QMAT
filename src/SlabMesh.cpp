@@ -2934,12 +2934,12 @@ std::vector<std::vector<unsigned>> SlabMesh::exportMergeList()
         if (vertices[i].first)
         {
             auto &list{vertices[i].second->merged_vertices};
-            // cout << i << ": { ";
-            // for (auto j : list)
-            // {
-            //     cout << j << ",";
-            // }
-            // cout << "} " << endl;
+            cout << i << ": { ";
+            for (auto j : list)
+            {
+                cout << j << ",";
+            }
+            cout << "} " << endl;
             L.push_back(list);
         }
     }

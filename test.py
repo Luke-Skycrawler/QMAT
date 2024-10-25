@@ -29,8 +29,8 @@ def test_reentrant():
     return M
 
 def test_add_sphere():
-    a = qmat(off_name, fine_ma)
-    # a.simplify_slab(100)
+    a = qmat(off_name, complete_ma)
+    a.simplify_slab(100)
     a.adjust_storage()
 
     b = qmat(a, coarse_ma)

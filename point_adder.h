@@ -27,4 +27,5 @@ struct PointAdder
         add_new_node(Sphere{Vector3d(x, y, z), r});
     }
     void export_ply(const std::string &filename);
+    std::vector<std::vector<unsigned>> export_merge_list() const;
 };
